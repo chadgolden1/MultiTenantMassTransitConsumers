@@ -1,0 +1,2 @@
+# MultiTenantMassTransitConsumers
+A simple example of a multi-tenanted MassTransit consumer, where information is known about the tenant, originating from the message, at the time of instantiation/dependency resolution. This might be useful for situations such as Entity Framework's ```DbContext``` where a tenant connection string may need to be known at the time of instantiation as opposed to being set in the consumer's ```Consume``` method.
