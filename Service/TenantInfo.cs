@@ -1,12 +1,11 @@
-﻿namespace Service
-{
-    public interface ITenantInfo
-    {
-        string TenantName { get; set; }
-    }
+﻿namespace Service;
 
-    public class TenantInfo : ITenantInfo
-    {
-        public string TenantName { get; set; }
-    }
+public interface ITenantInfo
+{
+    string TenantName { get; set; }
+}
+
+public class TenantInfo : ITenantInfo
+{
+    public string TenantName { get; set; }
 }

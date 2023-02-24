@@ -1,10 +1,7 @@
-﻿using System;
+﻿namespace Contracts;
 
-namespace Contracts
+public interface IMessageWithTenant
 {
-    public interface IMessageWithTenant
-    {
-        int OrderId { get; }
-        string Tenant { get; }
-    }
+    int OrderId { get; }
+    string Tenant { get; }
 }

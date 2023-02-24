@@ -1,42 +1,36 @@
 using Contracts;
 using MassTransit;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Service
+namespace Service;
+
+public class Worker : BackgroundService
 {
-    public class Worker : BackgroundService
+    private readonly ILogger<Worker> _logger;
+    private readonly IBus _bus;
+
+    private int _sendCount = 0;
+
+    public Worker(ILogger<Worker> logger, IBus endpoint)
     {
-        private readonly ILogger<Worker> _logger;
-        private readonly IBus _bus;
+        _logger = logger;
+        _bus = endpoint;
+    }
 
-        private int _sendCount = 0;
-
-        public Worker(ILogger<Worker> logger, IBus endpoint)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _logger = logger;
-            _bus = endpoint;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
+            var message = new
             {
-                var message = new
-                {
-                    OrderId = _sendCount++,
-                    Tenant = Guid.NewGuid().ToString().Substring(0, 4)
-                };
+                OrderId = _sendCount++,
+                Tenant = Guid.NewGuid().ToString().Substring(0, 4)
+            };
 
-                await _bus.Send<IMessageWithTenant>(message, cancellationToken: stoppingToken);
+            await _bus.Publish<IMessageWithTenant>(message, cancellationToken: stoppingToken);
 
-                _logger.LogInformation($"Sending message with OrderId {message.OrderId} and tenant {message.Tenant}");
+            _logger.LogInformation("Sending message with OrderId {OrderId} and tenant {Tenant}", message.OrderId, message.Tenant);
 
-                await Task.Delay(3000, stoppingToken);
-            }
+            await Task.Delay(3000, stoppingToken);
         }
     }
 }

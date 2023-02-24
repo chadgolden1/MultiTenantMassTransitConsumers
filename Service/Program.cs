@@ -1,37 +1,21 @@
-using Contracts;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Service;
 using Service.Consumers;
-using System;
 
-namespace Service
-{
-    public class Program
+var host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((hostContext, services) =>
     {
-        public static void Main(string[] args)
+        services.AddScoped<ITenantInfo, TenantInfo>();
+        services.AddMassTransit(mt =>
         {
-            CreateHostBuilder(args).Build().Run();
-        }
+            mt.AddConsumers(typeof(Program).Assembly);
+            mt.UsingInMemory((ctx, mc) =>
+            {
+                mc.UseConsumeFilter(typeof(TenantScopedConsumerFilter<>), ctx);
+                mc.ConfigureEndpoints(ctx);
+            });
+        });
+        services.AddHostedService<Worker>();
+    });
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.AddScoped<ITenantInfo, TenantInfo>();
-                    services.AddMassTransit(mt =>
-                    {
-                        mt.UsingInMemory((ctx, mc) =>
-                        {
-                            EndpointConvention.Map<IMessageWithTenant>(new Uri("queue:tenanted"));
-                            mc.ReceiveEndpoint("tenanted", r =>
-                            {
-                                r.Consumer(new TenantedConsumerFactory(ctx.GetRequiredService<IServiceProvider>()));
-                            });
-                        });
-                    });
-                    services.AddMassTransitHostedService();
-                    services.AddHostedService<Worker>();
-                });
-    }
-}
+await host.Build().RunAsync();
